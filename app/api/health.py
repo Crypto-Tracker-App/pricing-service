@@ -17,6 +17,7 @@ def health():
             'detail': 'database connection ok'
         }), 200
     except Exception as exc:
+        logger.error("Health check failed", exc_info=True)
         return jsonify({ 
             'status': 'error',
             'detail': str(exc)

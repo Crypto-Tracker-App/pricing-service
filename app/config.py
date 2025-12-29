@@ -14,3 +14,5 @@ class Config:
         "pool_timeout": 30,
         "echo": False
     }
+
+    COINGEKO_API_KEY = environ.get("COINGECKO_API_KEY")

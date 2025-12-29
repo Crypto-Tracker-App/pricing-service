@@ -18,7 +18,10 @@ def create_app():
     
     # Register routes
     from app.api.health import health_bp
+    from app.api.coin import coin_bp
+    
     app.register_blueprint(health_bp)
+    app.register_blueprint(coin_bp)
     
     return app
 
