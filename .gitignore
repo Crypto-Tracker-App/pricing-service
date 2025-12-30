@@ -193,6 +193,10 @@ infrastructure/kubernetes/secrets/db-secrets.yaml
 infrastructure/kubernetes/secrets/*secrets*.yaml
 !infrastructure/kubernetes/secrets/*.template
 
+k8s/db-secrets.yaml
+k8s/*secrets*.yaml
+!k8s/*.template
+
 # Local env files
 .env
 .env.*
