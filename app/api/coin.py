@@ -11,112 +11,67 @@ logger = get_logger(__name__)
 _coin_service = CoinService(coin_repository=CoinRepository())
 
 
-@coin_bp.route('/prices', methods=['GET'])
-def get_prices():
+@coin_bp.route('/top-coins', methods=['GET'])
+def get_top_coins():
     """
-    Get current prices for specified coins.
+    Get top coins by market cap rank.
     
     Query params:
-        coins: Comma-separated list of coin IDs (e.g., bitcoin,ethereum)
-        vs_currency: Currency to get price in (default: eur)
+        limit: Number of coins to return (default: 10, max: 100)
+        offset: Number of coins to skip for pagination (default: 0)
     
     Example:
-        GET /api/prices?coins=bitcoin,ethereum&vs_currency=eur
+        GET /api/top-coins?limit=20&offset=0
     """
     try:
-        # Get coin IDs from query params
-        coins = request.args.get('coins', 'bitcoin')
-        vs_currency = request.args.get('vs_currency', 'eur')
+        # Get pagination params
+        limit = min(int(request.args.get('limit', 10)), 100)  # Cap at 100
+        offset = int(request.args.get('offset', 0))
         
-        coin_list = [c.strip() for c in coins.split(',')]
-        
-        logger.info(f"Fetching prices for coins: {coin_list}")
-        response = _coin_service.get_prices(coin_list, vs_currency)
-        logger.info(f"Successfully fetched prices for {len(coin_list)} coins")
+        logger.info(f"Fetching top {limit} coins (offset: {offset})")
+        top_coins = _coin_service.get_top_coins(top_n=limit, skip_n=offset)
+        logger.info(f"Successfully fetched {len(top_coins)} coins")
         
         return jsonify({
             'status': 'success',
-            'data': to_jsonable(response)
+            'data': top_coins,
+            'pagination': {
+                'limit': limit,
+                'offset': offset,
+                'returned': len(top_coins)
+            }
         }), 200
         
     except Exception as e:
-        logger.error(f"Failed to fetch prices: {str(e)}", exc_info=True)
+        logger.error(f"Failed to fetch top coins: {str(e)}", exc_info=True)
         return jsonify({
             'status': 'error',
             'message': str(e)
         }), 500
 
 
-@coin_bp.route('/fetch-prices', methods=['POST'])
-def fetch_and_store_prices():
+@coin_bp.route('/coin/<coin_id>', methods=['GET'])
+def get_coin(coin_id: str):
     """
-    Fetch current prices and store them in the database.
-    Intended to be called by CronJob.
-    
-    Body (optional):
-        {
-            "coins": ["bitcoin", "ethereum", "cardano"]
-        }
-    
-    If no coins specified, fetches default list.
-    """
-    try:
-        # Get coins from request body or use defaults
-        data = request.get_json() if request.is_json else {}
-        coin_list = data.get('coins', ['bitcoin', 'ethereum', 'cardano'])
-        
-        logger.info(f"Fetching and storing prices for {len(coin_list)} coins", extra={"coins": coin_list})
-        response = _coin_service.fetch_and_store_prices(coin_list, vs_currency='usd')
-        logger.info(f"Successfully fetched prices for storage", extra={"coin_count": len(response)})
-        
-        return jsonify({
-            'status': 'success',
-            'message': 'Fetched prices',
-            'data': to_jsonable(response)
-        }), 200
-        
-    except Exception as e:
-        logger.error(f"Failed to fetch and store prices: {str(e)}", exc_info=True)
-        return jsonify({
-            'status': 'error',
-            'message': str(e)
-        }), 500
-
-
-@coin_bp.route('/history/<coin_id>', methods=['GET'])
-def get_coin_history(coin_id):
-    """
-    Get historical price data for a specific coin.
+    Get a single coin (metadata + market data) by its ID.
     
     Path params:
-        coin_id: CoinGecko coin ID (e.g., bitcoin)
-    
-    Query params:
-        vs_currency: Currency (default: usd)
-        days: Number of days (default: 7)
+        coin_id: CoinGecko coin id (e.g., bitcoin, ethereum)
     
     Example:
-        GET /api/history/bitcoin?vs_currency=usd&days=30
+        GET /api/coin/bitcoin
     """
     try:
-        vs_currency = request.args.get('vs_currency', 'usd')
-        days = request.args.get('days', '7')
-        
-        logger.info(f"Fetching {days} days of history for {coin_id}")
-        response = _coin_service.get_coin_history(coin_id, vs_currency, days)
-        logger.info(f"Successfully fetched history for {coin_id}")
-        
+        coin_data = _coin_service.get_coin_by_id(coin_id)
         return jsonify({
             'status': 'success',
-            'coin_id': coin_id,
-            'data': to_jsonable(response)
+            'data': coin_data
         }), 200
         
     except Exception as e:
-        logger.error(f"Failed to fetch history for {coin_id}: {str(e)}", exc_info=True)
+        logger.error(f"Failed to fetch coin data: {str(e)}", exc_info=True)
         return jsonify({
             'status': 'error',
             'message': str(e)
         }), 500
-
-
+    
