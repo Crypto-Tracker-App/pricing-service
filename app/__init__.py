@@ -23,5 +23,34 @@ def create_app():
     app.register_blueprint(health_bp)
     app.register_blueprint(coin_bp)
     
+    # Register CLI commands
+    register_cli_commands(app)
+    
     return app
+
+
+def register_cli_commands(app):
+    """Register Flask CLI commands."""
+    
+    @app.cli.command()
+    def seed():
+        """Seed the database with initial coins."""
+        from app.services.coin_service import CoinService
+        from app.repositories.coin_repository import CoinRepository
+        
+        with app.app_context():
+            service = CoinService(CoinRepository())
+            service.seed_database()
+            print("Database seeded successfully!")
+
+    @app.cli.command()
+    def update_market_data():
+        """Update the market data for all coins."""
+        from app.services.coin_service import CoinService
+        from app.repositories.coin_repository import CoinRepository
+        
+        with app.app_context():
+            service = CoinService(CoinRepository())
+            service.updateCoinMarketData()
+            print("Market data updated successfully!")
 

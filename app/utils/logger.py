@@ -133,6 +133,12 @@ def setup_logging():
     werkzeug_logger = logging.getLogger('werkzeug')
     werkzeug_logger.setLevel(logging.WARNING)  # Only show warnings/errors, not INFO
 
+    # Suppress noisy third-party HTTP client logs by default
+    external_level_name = os.getenv('EXTERNAL_LOG_LEVEL', 'WARNING').upper()
+    external_level = getattr(logging, external_level_name, logging.WARNING)
+    for name in ('coingecko_sdk', 'httpx', 'httpcore'):
+        logging.getLogger(name).setLevel(external_level)
+
 
 def get_logger(name):
     """Get a logger instance with the given name."""
@@ -140,39 +146,44 @@ def get_logger(name):
 
 
 def setup_request_logging(app):
-    """Set up before/after request logging for the Flask app."""
+    """Set up request logging for the Flask app with low noise."""
     logger = get_logger('app.request')
-    
+
+    # Control completion logging via env: errors|all|off
+    completion_mode = os.getenv('LOG_REQUEST_COMPLETION', 'errors').lower()
+
     @app.before_request
-    def log_request_start():
-        """Log incoming requests and ensure correlation ID is set."""
-        # Ensure correlation ID is initialized
-        correlation_id = get_correlation_id()
-        
-        logger.info(
-            "Request received",
-            extra={
-                "correlation_id": correlation_id,
-                "endpoint": request.endpoint
-            }
-        )
-    
+    def ensure_correlation_id():
+        """Initialize correlation ID without logging every request."""
+        get_correlation_id()
+
     @app.after_request
     def log_request_end(response):
-        """Log request completion with status code."""
+        """Log request completion selectively based on mode."""
         correlation_id = get_correlation_id()
-        
-        logger.info(
-            f"Request completed with status {response.status_code}",
-            extra={
-                "correlation_id": correlation_id,
-                "status_code": response.status_code
-            }
-        )
-        
+
+        if completion_mode == 'all':
+            logger.info(
+                "Request completed",
+                extra={
+                    "correlation_id": correlation_id,
+                    "status_code": response.status_code,
+                    "endpoint": request.endpoint,
+                }
+            )
+        elif completion_mode == 'errors' and response.status_code >= 400:
+            logger.warning(
+                "Request completed with error",
+                extra={
+                    "correlation_id": correlation_id,
+                    "status_code": response.status_code,
+                    "endpoint": request.endpoint,
+                }
+            )
+
         # Add correlation ID to response headers for client tracking
         response.headers['X-Correlation-ID'] = correlation_id
-        
+
         return response
     
     @app.teardown_request
