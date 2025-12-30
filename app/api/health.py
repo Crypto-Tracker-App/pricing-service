@@ -6,6 +6,16 @@ from app.utils.logger import get_logger
 health_bp = Blueprint('health', __name__)
 logger = get_logger(__name__)
 
+
+@health_bp.route('/ready', methods=['GET'])
+def ready():
+    """Readiness probe that does not require DB connectivity."""
+    return jsonify({
+        'status': 'ok',
+        'detail': 'service ready'
+    }), 200
+
+
 @health_bp.route('/health', methods=['GET'])
 def health():
     """Health check endpoint that verifies database connectivity."""
