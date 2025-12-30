@@ -25,8 +25,8 @@ class Config:
     }
 
     # External API configuration
-    COINGEKO_API_KEY = environ.get("COINGECKO_API_KEY")
-    
+    COINGECKO_API_KEY = environ.get("COINGECKO_API_KEY")
+
     # Logging configuration
     EXTERNAL_LOG_LEVEL = environ.get("EXTERNAL_LOG_LEVEL", "WARNING")
     LOG_REQUEST_COMPLETION = environ.get("LOG_REQUEST_COMPLETION", "errors")
