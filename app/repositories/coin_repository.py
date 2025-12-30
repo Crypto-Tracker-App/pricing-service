@@ -1,30 +1,19 @@
-from typing import Dict, Any
+from app import db
+from app.models.coinModels import Coin
+from app.models.marketData import MarketData
 
-from app.utils.logger import get_logger
-
-logger = get_logger(__name__)
 
 
 class CoinRepository:
     """
-    Simple repository abstraction for coin-related persistence.
-    Currently a minimal implementation that logs operations.
-    Can be extended to use SQLAlchemy models for real persistence.
+    Thin repository providing shared database session and models.
+    Services use this to access SQLAlchemy session and write queries directly.
     """
+    
+    # Shared session
+    session = db.session
+    
+    # Models
+    Coin = Coin
+    MarketData = MarketData
 
-    def save_prices(self, prices: Dict[str, Any], vs_currency: str) -> None:
-        """
-        Persist fetched prices.
-        This minimal implementation just logs; replace with DB writes as needed.
-        """
-        # Example structure: { "bitcoin": {"usd": 12345.67, ...}, ... }
-        try:
-            total = len(prices) if isinstance(prices, dict) else 0
-            logger.info(
-                "Saving prices (stub)",
-                extra={"count": total, "vs_currency": vs_currency},
-            )
-            # TODO: Implement SQLAlchemy models and persist here.
-        except Exception as e:
-            logger.error(f"Failed to save prices: {e}", exc_info=True)
-            raise
