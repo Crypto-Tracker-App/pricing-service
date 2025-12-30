@@ -1,0 +1,102 @@
+name: CI/CD for Pricing Service
+
+on:
+  push:
+    branches: [ main ]
+
+env:
+  ACR: cryptotracker.azurecr.io
+  IMAGE_NAME: pricing-service
+  IMAGE_TAG: ${{ github.sha }}
+  K8S_DIR: k8s
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies and verify build
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          # TODO: add tests when available
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Login to ACR
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ env.ACR }}
+          username: ${{ secrets.ACR_USERNAME }}
+          password: ${{ secrets.ACR_PASSWORD }}
+
+      - name: Build and push image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          platforms: linux/amd64
+          push: true
+          tags: |
+            ${{ env.ACR }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
+            ${{ env.ACR }}/${{ env.IMAGE_NAME }}:latest
+
+  deploy-to-aks:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Azure Login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Set AKS context
+        uses: azure/aks-set-context@v3
+        with:
+          cluster-name: ${{ vars.AKS_NAME }}
+          resource-group: ${{ vars.AKS_RG }}
+
+      - name: Create image pull secret (if needed)
+        if: ${{ env.ACR != '' }}
+        run: |
+          kubectl create secret docker-registry acr-creds \
+            --docker-server=${{ env.ACR }} \
+            --docker-username=${{ secrets.ACR_USERNAME }} \
+            --docker-password=${{ secrets.ACR_PASSWORD }} \
+            --dry-run=client -o yaml | kubectl apply -f -
+
+      - name: Patch deployment image
+        run: |
+          kubectl set image deployment/pricing-service pricing-service=${{ env.ACR }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }} || true
+
+      - name: Apply manifests
+        run: |
+          kubectl apply -f ${{ env.K8S_DIR }}/pricingservice-configmap.yaml
+          kubectl apply -f ${{ env.K8S_DIR }}/pricingservice-postgres.yaml
+          kubectl apply -f ${{ env.K8S_DIR }}/pricingservice-jobs.yaml
+          kubectl apply -f ${{ env.K8S_DIR }}/pricingservice-deployment.yaml
+          kubectl apply -f ${{ env.K8S_DIR }}/pricingservice-service.yaml
+
+      - name: Rollout status
+        run: |
+          kubectl rollout status deployment/pricing-service --timeout=180s
+          kubectl get pods -l app=pricing-service
+          kubectl get services pricing-service

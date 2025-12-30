@@ -190,10 +190,10 @@ az login
 az acr login --name <your-acr-name>
 
 # Tag image for ACR
-docker tag pricing-service:latest <your-acr-name>.azurecr.io/pricing-service:latest
+docker tag pricing-service:latest cryptotracker.azurecr.io/pricing-service:latest
 
 # Push image to ACR
-docker push <your-acr-name>.azurecr.io/pricing-service:latest
+docker push cryptotracker.azurecr.io/pricing-service:latest
 ```
 
 ### Azure Kubernetes Service Deployment
