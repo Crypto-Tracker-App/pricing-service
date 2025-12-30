@@ -7,12 +7,13 @@ import uuid
 from datetime import datetime, timezone
 from urllib.parse import urlparse, parse_qs, urlencode
 from flask import request, has_request_context, g
+from app.config import Config
 
 
-# Service metadata
-SERVICE_NAME = os.getenv("SERVICE_NAME", "pricing-service")
-SERVICE_VERSION = os.getenv("SERVICE_VERSION", "1.0.0")
-ENVIRONMENT = os.getenv("ENVIRONMENT", "development")
+# Service metadata from config
+SERVICE_NAME = Config.SERVICE_NAME
+SERVICE_VERSION = Config.SERVICE_VERSION
+ENVIRONMENT = Config.ENVIRONMENT
 
 
 def sanitize_path(path):
@@ -134,7 +135,7 @@ def setup_logging():
     werkzeug_logger.setLevel(logging.WARNING)  # Only show warnings/errors, not INFO
 
     # Suppress noisy third-party HTTP client logs by default
-    external_level_name = os.getenv('EXTERNAL_LOG_LEVEL', 'WARNING').upper()
+    external_level_name = Config.EXTERNAL_LOG_LEVEL.upper()
     external_level = getattr(logging, external_level_name, logging.WARNING)
     for name in ('coingecko_sdk', 'httpx', 'httpcore'):
         logging.getLogger(name).setLevel(external_level)
@@ -150,7 +151,7 @@ def setup_request_logging(app):
     logger = get_logger('app.request')
 
     # Control completion logging via env: errors|all|off
-    completion_mode = os.getenv('LOG_REQUEST_COMPLETION', 'errors').lower()
+    completion_mode = Config.LOG_REQUEST_COMPLETION.lower()
 
     @app.before_request
     def ensure_correlation_id():

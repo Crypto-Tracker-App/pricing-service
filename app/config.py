@@ -4,6 +4,12 @@ from dotenv import load_dotenv
 load_dotenv()
 
 class Config:
+    # Service metadata
+    SERVICE_NAME = environ.get("SERVICE_NAME", "pricing-service")
+    SERVICE_VERSION = environ.get("SERVICE_VERSION", "1.0.0")
+    ENVIRONMENT = environ.get("ENVIRONMENT", "development")
+    
+    # Database configuration
     DB_USER = environ.get("POSTGRES_USER", "postgres")
     DB_PASS = environ.get("POSTGRES_PASSWORD", "postgres")
     DB_NAME = environ.get("POSTGRES_DB", "pricing_db")
@@ -18,4 +24,9 @@ class Config:
         "echo": False
     }
 
+    # External API configuration
     COINGEKO_API_KEY = environ.get("COINGECKO_API_KEY")
+    
+    # Logging configuration
+    EXTERNAL_LOG_LEVEL = environ.get("EXTERNAL_LOG_LEVEL", "WARNING")
+    LOG_REQUEST_COMPLETION = environ.get("LOG_REQUEST_COMPLETION", "errors")
