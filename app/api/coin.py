@@ -18,7 +18,7 @@ def get_top_coins():
     tags:
       - Coins
     summary: Retrieve top cryptocurrency coins
-    description: Returns a list of top cryptocurrencies sorted by market cap rank with pagination support
+    description: Returns a list of top cryptocurrencies sorted by market cap rank, with pagination support
     parameters:
       - name: limit
         in: query
