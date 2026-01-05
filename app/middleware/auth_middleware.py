@@ -1,11 +1,16 @@
 import jwt
 import logging
+import os
 from flask import request, jsonify, g, current_app
 from functools import wraps
 
 logger = logging.getLogger(__name__)
 
 ALGORITHM = "HS256"
+
+def get_secret_key():
+    """Get SECRET_KEY from Flask app config."""
+    return current_app.config.get('SECRET_KEY') or os.getenv('SECRET_KEY', 'dev-secret-key-change-in-production')
 
 def auth_required(f):
     @wraps(f)
@@ -24,7 +29,7 @@ def auth_required(f):
                 return jsonify({'error': 'Unauthorized', 'message': 'Invalid Authorization header format'}), 401
             
             token = parts[1]
-            secret_key = current_app.config.get('SECRET_KEY', 'dev-secret-key-change-in-production')
+            secret_key = get_secret_key()
             payload = jwt.decode(token, secret_key, algorithms=[ALGORITHM])
             
             user_id = payload.get('user_id')
