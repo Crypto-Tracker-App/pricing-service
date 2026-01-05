@@ -190,4 +190,3 @@ def get_coin(coin_id: str):
             'status': 'error',
             'message': str(e)
         }), 500
-    

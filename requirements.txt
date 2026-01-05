@@ -6,3 +6,4 @@ psycopg2-binary==2.9.11
 python-dotenv==1.0.0
 alembic==1.17
 flasgger==0.9.7.1
+PyJWT==2.8.1

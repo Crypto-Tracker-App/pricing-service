@@ -9,6 +9,9 @@ class Config:
     SERVICE_VERSION = environ.get("SERVICE_VERSION", "1.0.0")
     ENVIRONMENT = environ.get("ENVIRONMENT", "development")
     
+    # Security
+    SECRET_KEY = environ.get("SECRET_KEY", "dev-secret-key-change-in-production")
+    
     # Database configuration
     DB_USER = environ.get("POSTGRES_USER", "postgres")
     DB_PASS = environ.get("POSTGRES_PASSWORD", "postgres")
