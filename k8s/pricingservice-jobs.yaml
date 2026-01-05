@@ -52,4 +52,4 @@ spec:
                     name: pricing-service-config
                 - secretRef:
                     name: pricing-service-secrets
-              command: ["sh", "-c", "flask update-market-data"]
+              command: ["sh", "-c", "sleep 10 && flask update-market-data"]

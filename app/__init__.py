@@ -1,5 +1,6 @@
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
+from flasgger import Swagger
 
 db = SQLAlchemy()
 
@@ -11,6 +12,49 @@ def create_app():
     
     # Initialize SQLAlchemy
     db.init_app(app)
+    
+    # Initialize Swagger/OpenAPI documentation
+    swagger_config = {
+        "headers": [],
+        "specs": [
+            {
+                "endpoint": 'apispec',
+                "route": '/apispec.json',
+                "rule_filter": lambda rule: True,
+                "model_filter": lambda tag: True,
+            }
+        ],
+        "static_url_path": "/flasgger_static",
+        "swagger_ui": True,
+        "specs_route": "/apidocs/"
+    }
+    
+    swagger_template = {
+        "swagger": "2.0",
+        "info": {
+            "title": "Pricing Service API",
+            "description": "API for cryptocurrency pricing data and market information",
+            "version": "1.0.0",
+            "contact": {
+                "name": "Crypto Tracker Team"
+            }
+        },
+        "host": "",  # Will be set dynamically based on request
+        "basePath": "/",
+        "schemes": ["http", "https"],
+        "tags": [
+            {
+                "name": "Health",
+                "description": "Health and readiness endpoints"
+            },
+            {
+                "name": "Coins",
+                "description": "Cryptocurrency data operations"
+            }
+        ]
+    }
+    
+    Swagger(app, config=swagger_config, template=swagger_template)
     
     # Set up request logging middleware
     from app.utils.logger import setup_request_logging

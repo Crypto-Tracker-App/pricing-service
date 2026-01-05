@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from sqlalchemy import insert
+from sqlalchemy.dialects.postgresql import insert
 from app.utils.coingecko import client
 from app.repositories.coin_repository import CoinRepository
 from app.models.coinModels import supported_coins

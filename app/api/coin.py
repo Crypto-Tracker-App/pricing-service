@@ -12,15 +12,83 @@ _coin_service = CoinService(coin_repository=CoinRepository())
 
 @coin_bp.route('/top-coins', methods=['GET'])
 def get_top_coins():
-    """
-    Get top coins by market cap rank.
-    
-    Query params:
-        limit: Number of coins to return (default: 10, max: 100)
-        offset: Number of coins to skip for pagination (default: 0)
-    
-    Example:
-        GET /api/top-coins?limit=20&offset=0
+    """Get top coins by market cap rank
+    ---
+    tags:
+      - Coins
+    summary: Retrieve top cryptocurrency coins
+    description: Returns a list of top cryptocurrencies sorted by market cap rank, with pagination support
+    parameters:
+      - name: limit
+        in: query
+        type: integer
+        required: false
+        default: 10
+        minimum: 1
+        maximum: 100
+        description: Number of coins to return (max 100)
+      - name: offset
+        in: query
+        type: integer
+        required: false
+        default: 0
+        minimum: 0
+        description: Number of coins to skip for pagination
+    responses:
+      200:
+        description: Successfully retrieved top coins
+        schema:
+          type: object
+          properties:
+            status:
+              type: string
+              example: success
+            data:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    example: bitcoin
+                  symbol:
+                    type: string
+                    example: btc
+                  name:
+                    type: string
+                    example: Bitcoin
+                  current_price:
+                    type: number
+                    example: 43250.50
+                  market_cap:
+                    type: number
+                    example: 847832100000
+                  market_cap_rank:
+                    type: integer
+                    example: 1
+            pagination:
+              type: object
+              properties:
+                limit:
+                  type: integer
+                  example: 10
+                offset:
+                  type: integer
+                  example: 0
+                returned:
+                  type: integer
+                  example: 10
+      500:
+        description: Internal server error
+        schema:
+          type: object
+          properties:
+            status:
+              type: string
+              example: error
+            message:
+              type: string
+              example: Database connection failed
     """
     try:
         # Get pagination params
@@ -51,14 +119,63 @@ def get_top_coins():
 
 @coin_bp.route('/coin/<coin_id>', methods=['GET'])
 def get_coin(coin_id: str):
-    """
-    Get a single coin (metadata + market data) by its ID.
-    
-    Path params:
-        coin_id: CoinGecko coin id (e.g., bitcoin, ethereum)
-    
-    Example:
-        GET /api/coin/bitcoin
+    """Get detailed information for a specific coin
+    ---
+    tags:
+      - Coins
+    summary: Retrieve coin details by ID
+    description: Returns metadata and market data for a specific cryptocurrency
+    parameters:
+      - name: coin_id
+        in: path
+        type: string
+        required: true
+        description: CoinGecko coin identifier (e.g., bitcoin, ethereum)
+        example: bitcoin
+    responses:
+      200:
+        description: Successfully retrieved coin data
+        schema:
+          type: object
+          properties:
+            status:
+              type: string
+              example: success
+            data:
+              type: object
+              properties:
+                id:
+                  type: string
+                  example: bitcoin
+                symbol:
+                  type: string
+                  example: btc
+                name:
+                  type: string
+                  example: Bitcoin
+                current_price:
+                  type: number
+                  example: 43250.50
+                market_cap:
+                  type: number
+                  example: 847832100000
+                market_cap_rank:
+                  type: integer
+                  example: 1
+                total_volume:
+                  type: number
+                  example: 25678000000
+      500:
+        description: Internal server error
+        schema:
+          type: object
+          properties:
+            status:
+              type: string
+              example: error
+            message:
+              type: string
+              example: Coin not found
     """
     try:
         coin_data = _coin_service.get_coin_by_id(coin_id)
