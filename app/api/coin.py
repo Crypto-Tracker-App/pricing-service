@@ -2,7 +2,6 @@ from flask import Blueprint, jsonify, request
 from app.services.coin_service import CoinService
 from app.repositories.coin_repository import CoinRepository
 from app.utils.logger import get_logger
-from app.utils.json import to_jsonable
 
 coin_bp = Blueprint('coin', __name__, url_prefix='/api')
 logger = get_logger(__name__)

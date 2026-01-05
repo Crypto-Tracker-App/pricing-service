@@ -4,6 +4,7 @@ from app.utils.coingecko import client
 from app.repositories.coin_repository import CoinRepository
 from app.models.coinModels import supported_coins
 
+
 class CoinService:
     def __init__(self, coin_repository: CoinRepository, vs_currency: str = "eur"):
         self.coin_repository = coin_repository
@@ -39,7 +40,9 @@ class CoinService:
                 'symbol': market_data.coin.symbol,
                 'name': market_data.coin.name,
                 'image': market_data.coin.image,
-                'current_price': market_data.current_price
+                'current_price': market_data.current_price,
+                'price_change_24h': market_data.price_change_24h,
+                'price_change_percentage_24h': market_data.price_change_percentage_24h
             }
             top_coins.append(coin_info)
         
