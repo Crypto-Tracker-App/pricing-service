@@ -86,30 +86,38 @@ def register_cli_commands(app):
         """Seed the database with initial coins."""
         from app.services.coin_service import CoinService
         from app.repositories.coin_repository import CoinRepository
+        from app.utils.logger import get_logger
+        
+        logger = get_logger(__name__)
         
         with app.app_context():
             service = CoinService(CoinRepository())
             service.seed_database()
-            print("Database seeded successfully!")
+            logger.info("Database seeded successfully!")
 
     @app.cli.command()
     def update_market_data():
         """Update the market data for all coins."""
         from app.services.coin_service import CoinService
         from app.repositories.coin_repository import CoinRepository
+        from app.utils.logger import get_logger
         import requests
         import os
+        
+        logger = get_logger(__name__)
         
         with app.app_context():
             service = CoinService(CoinRepository())
             service.updateCoinMarketData()
-            print("Market data updated successfully!")
+            logger.info("Market data updated successfully!")
             
             # Trigger alert checking in alert-service
             alert_service_url = os.getenv('ALERT_SERVICE_URL', 'http://20.251.246.218/alert-service')
+            check_alerts_url = f"{alert_service_url}/api/check-alerts"
             try:
-                requests.post(f"{alert_service_url}/api/check-alerts", timeout=5)
-                print("Alert check triggered successfully!")
-            except Exception as e:
-                print(f"Failed to trigger alert check: {e}")
+                response = requests.post(check_alerts_url, timeout=5)
+                response.raise_for_status()
+                logger.info("Alert check triggered successfully!", extra={"url": check_alerts_url})
+            except requests.exceptions.RequestException as e:
+                logger.warning(f"Failed to trigger alert check: {e}", extra={"url": check_alerts_url})
 
