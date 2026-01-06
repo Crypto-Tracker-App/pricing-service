@@ -19,7 +19,7 @@ The Pricing Service is responsible for:
 - **WSGI Server**: Gunicorn 21.2.0
 - **Data Source**: CoinGecko API (via coingecko-sdk 1.12.0)
 - **Database**: PostgreSQL 18
-- **Migrations**: Alembic 1.17
+- **Migrations**: Alembic 1.17.
 
 ## Local Development
 .
