@@ -40,11 +40,13 @@ def create_app():
         "basePath": "/",
         "schemes": ["http", "https"],
         "securityDefinitions": {
-            "BearerAuth": {
-                "type": "apiKey",
-                "in": "header",
-                "name": "Authorization",
-                "description": "JWT Bearer token authentication. Format: 'Bearer <token>'"
+            'BearerAuth': {
+                'type': 'apiKey',
+                'name': 'Authorization',
+                'scheme': 'bearer',
+                'bearerFormat': 'bearer',
+                'in': 'header',
+                'description': 'Type in the *\'Value\'* input box below: **\'Bearer &lt;JWT&gt;\'**, where JWT is the token',
             }
         },
         "tags": [
