@@ -92,9 +92,19 @@ def register_cli_commands(app):
         """Update the market data for all coins."""
         from app.services.coin_service import CoinService
         from app.repositories.coin_repository import CoinRepository
+        import requests
+        import os
         
         with app.app_context():
             service = CoinService(CoinRepository())
             service.updateCoinMarketData()
             print("Market data updated successfully!")
+            
+            # Trigger alert checking in alert-service
+            alert_service_url = os.getenv('ALERT_SERVICE_URL', 'http://20.251.246.218/alert-service')
+            try:
+                requests.post(f"{alert_service_url}/api/check-alerts", timeout=5)
+                print("Alert check triggered successfully!")
+            except Exception as e:
+                print(f"Failed to trigger alert check: {e}")
 
