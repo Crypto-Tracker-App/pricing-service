@@ -9,8 +9,19 @@ logger = logging.getLogger(__name__)
 ALGORITHM = "HS256"
 
 def get_secret_key():
-    """Get SECRET_KEY from Flask app config."""
-    return current_app.config.get('SECRET_KEY') or os.getenv('SECRET_KEY', 'dev-secret-key-change-in-production')
+    """Get SECRET_KEY from Flask app config, with fallback to environment variable."""
+    try:
+        secret = current_app.config.get('SECRET_KEY')
+        if secret:
+            logger.debug(f"Got SECRET_KEY from Flask config: {secret[:20]}...")
+            return secret
+    except RuntimeError:
+        # Outside of app context
+        logger.debug("Not in app context, falling back to environment variable")
+    
+    secret = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')
+    logger.debug(f"Using SECRET_KEY from environment: {secret[:20]}...")
+    return secret
 
 def auth_required(f):
     @wraps(f)
@@ -29,8 +40,18 @@ def auth_required(f):
                 return jsonify({'error': 'Unauthorized', 'message': 'Invalid Authorization header format'}), 401
             
             token = parts[1]
+            logger.debug(f"Attempting to decode token: {token[:30]}...")
+            
+            # Get SECRET_KEY from current_app config
             secret_key = get_secret_key()
-            payload = jwt.decode(token, secret_key, algorithms=[ALGORITHM])
+            logger.debug(f"Using SECRET_KEY (first 20 chars): {secret_key[:20]}...")
+            
+            try:
+                payload = jwt.decode(token, secret_key, algorithms=[ALGORITHM])
+                logger.debug(f"Token decoded successfully. Payload: {payload}")
+            except jwt.DecodeError as e:
+                logger.error(f"JWT Decode error: {str(e)}")
+                return jsonify({'error': 'Unauthorized', 'message': 'Invalid token format'}), 401
             
             user_id = payload.get('user_id')
             username = payload.get('username')
@@ -39,6 +60,7 @@ def auth_required(f):
                 logger.warning("Token missing user_id")
                 return jsonify({'error': 'Unauthorized', 'message': 'Invalid token payload'}), 401
             
+            logger.info(f"User authenticated: user_id={user_id}, username={username}")
             g.current_user = {
                 'user_id': user_id,
                 'username': username

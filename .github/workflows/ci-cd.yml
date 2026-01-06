@@ -101,6 +101,7 @@ jobs:
 
       - name: Rollout status
         run: |
+          kubectl rollout restart deployment/portfolio-service
           kubectl rollout status deployment/pricing-service --timeout=180s
           kubectl get pods -l app=pricing-service
           kubectl get services pricing-service
