@@ -34,14 +34,19 @@ def create_app():
         "info": {
             "title": "Pricing Service API",
             "description": "API for cryptocurrency pricing data and market information",
-            "version": "1.0.0",
-            "contact": {
-                "name": "Crypto Tracker Team"
-            }
+            "version": "1.0.0"
         },
         "host": "",  # Will be set dynamically based on request
         "basePath": "/",
         "schemes": ["http", "https"],
+        "securityDefinitions": {
+            "BearerAuth": {
+                "type": "apiKey",
+                "in": "header",
+                "name": "Authorization",
+                "description": "JWT Bearer token authentication. Format: 'Bearer <token>'"
+            }
+        },
         "tags": [
             {
                 "name": "Health",
