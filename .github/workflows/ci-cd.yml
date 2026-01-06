@@ -8,7 +8,6 @@ env:
   ACR: cryptotracker.azurecr.io
   IMAGE_NAME: pricing-service
   IMAGE_TAG: ${{ github.sha }}
-  K8S_DIR: k8s
 
 jobs:
   build-and-push:
@@ -91,17 +90,8 @@ jobs:
         run: |
           kubectl set image deployment/pricing-service pricing-service=${{ env.ACR }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }} || true
 
-      - name: Apply manifests
-        run: |
-          kubectl apply -f ${{ env.K8S_DIR }}/pricingservice-configmap.yaml
-          kubectl apply -f ${{ env.K8S_DIR }}/pricingservice-postgres.yaml
-          kubectl apply -f ${{ env.K8S_DIR }}/pricingservice-jobs.yaml
-          kubectl apply -f ${{ env.K8S_DIR }}/pricingservice-deployment.yaml
-          kubectl apply -f ${{ env.K8S_DIR }}/pricingservice-service.yaml
-
       - name: Rollout status
         run: |
-          kubectl rollout restart deployment/portfolio-service
           kubectl rollout status deployment/pricing-service --timeout=180s
           kubectl get pods -l app=pricing-service
           kubectl get services pricing-service
