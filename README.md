@@ -22,7 +22,7 @@ The Pricing Service is responsible for:
 - **Migrations**: Alembic 1.17
 
 ## Local Development
-
+.
 ### Installation
 
 ```bash
