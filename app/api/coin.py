@@ -117,6 +117,98 @@ def get_top_coins():
         }), 500
 
 
+@coin_bp.route('/coin-ids', methods=['GET'])
+def get_coin_ids():
+    """Get IDs of top coins by market cap rank
+    ---
+    tags:
+      - Coins
+    summary: Retrieve coin IDs
+    description: Returns a list of IDs for top cryptocurrencies sorted by market cap rank, with pagination support
+    parameters:
+      - name: limit
+        in: query
+        type: integer
+        required: false
+        default: 10
+        minimum: 1
+        maximum: 100
+        description: Number of coin IDs to return (max 100)
+      - name: offset
+        in: query
+        type: integer
+        required: false
+        default: 0
+        minimum: 0
+        description: Number of coins to skip for pagination
+    responses:
+      200:
+        description: Successfully retrieved coin IDs
+        schema:
+          type: object
+          properties:
+            status:
+              type: string
+              example: success
+            data:
+              type: array
+              items:
+                type: string
+              example: ["bitcoin", "ethereum", "binancecoin"]
+            pagination:
+              type: object
+              properties:
+                limit:
+                  type: integer
+                  example: 10
+                offset:
+                  type: integer
+                  example: 0
+                returned:
+                  type: integer
+                  example: 3
+      500:
+        description: Internal server error
+        schema:
+          type: object
+          properties:
+            status:
+              type: string
+              example: error
+            message:
+              type: string
+              example: Database connection failed
+    """
+    try:
+        # Get pagination params
+        limit = min(int(request.args.get('limit', 10)), 100)  # Cap at 100
+        offset = int(request.args.get('offset', 0))
+        
+        logger.info(f"Fetching IDs of top {limit} coins (offset: {offset})")
+        top_coins = _coin_service.get_top_coins(top_n=limit, skip_n=offset)
+        
+        # Extract only the IDs
+        coin_ids = [coin['id'] for coin in top_coins]
+        logger.info(f"Successfully fetched {len(coin_ids)} coin IDs")
+        
+        return jsonify({
+            'status': 'success',
+            'data': coin_ids,
+            'pagination': {
+                'limit': limit,
+                'offset': offset,
+                'returned': len(coin_ids)
+            }
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Failed to fetch coin IDs: {str(e)}", exc_info=True)
+        return jsonify({
+            'status': 'error',
+            'message': str(e)
+        }), 500
+
+
 @coin_bp.route('/coin/<coin_id>', methods=['GET'])
 def get_coin(coin_id: str):
     """Get detailed information for a specific coin
