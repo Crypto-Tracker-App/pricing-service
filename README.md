@@ -13,7 +13,7 @@ The Pricing Service is responsible for:
 
 ## Technology Stack
 
-- **Language**: Python 3.14
+- **Language**: Python 3.14.
 - **Framework**: Flask 3.1
 - **ORM**: Flask-SQLAlchemy 3.1.1
 - **WSGI Server**: Gunicorn 21.2.0
