@@ -92,6 +92,57 @@ class CoinService:
         
         return coin_info
 
+    def search_coins(self, query: str, limit: int = 10):
+        """
+        Search for coins by ID, name, or symbol using case-insensitive matching.
+        
+        Args:
+            query: Search term (e.g., "bitcoin", "btc", "Bitcoin")
+            limit: Maximum number of results to return (default: 10)
+            
+        Returns:
+            list[dict]: List of matching coins with market data, ordered by market_cap_rank
+        """
+        query_lower = query.lower()
+        
+        market_data_records = (
+            self.coin_repository.session.query(self.coin_repository.MarketData)
+            .join(self.coin_repository.Coin)
+            .filter(
+                (self.coin_repository.Coin.id.ilike(f'%{query_lower}%')) |
+                (self.coin_repository.Coin.name.ilike(f'%{query_lower}%')) |
+                (self.coin_repository.Coin.symbol.ilike(f'%{query_lower}%'))
+            )
+            .order_by(self.coin_repository.MarketData.market_cap_rank.asc().nullslast())
+            .limit(limit)
+            .all()
+        )
+        
+        results = []
+        for market_data in market_data_records:
+            coin_info = {
+                'id': market_data.coin.id,
+                'symbol': market_data.coin.symbol,
+                'name': market_data.coin.name,
+                'image': market_data.coin.image,
+                'current_price': market_data.current_price,
+                'market_cap': market_data.market_cap,
+                'market_cap_rank': market_data.market_cap_rank,
+                'total_volume': market_data.total_volume,
+                'high_24h': market_data.high_24h,
+                'low_24h': market_data.low_24h,
+                'price_change_24h': market_data.price_change_24h,
+                'price_change_percentage_24h': market_data.price_change_percentage_24h,
+                'circulating_supply': market_data.circulating_supply,
+                'total_supply': market_data.total_supply,
+                'max_supply': market_data.max_supply,
+                'sparkline_in_7d': market_data.sparkline_in_7d,
+                'last_updated': market_data.last_updated.isoformat() if market_data.last_updated else None,
+            }
+            results.append(coin_info)
+        
+        return results
+
     def seed_database(self):
         """
         Seed the database with supported coins and their initial market data.
