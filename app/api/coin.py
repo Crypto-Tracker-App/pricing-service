@@ -25,8 +25,8 @@ def get_top_coins():
         required: false
         default: 10
         minimum: 1
-        maximum: 8000
-        description: Number of coins to return (max 8000)
+        maximum: 100
+        description: Number of coins to return (max 100)
       - name: offset
         in: query
         type: integer
@@ -92,7 +92,7 @@ def get_top_coins():
     """
     try:
         # Get pagination params
-        limit = min(int(request.args.get('limit', 10)), 8000)  # Cap at 8000
+        limit = min(int(request.args.get('limit', 10)), 100)  # Cap at 100
         offset = int(request.args.get('offset', 0))
         
         logger.info(f"Fetching top {limit} coins (offset: {offset})")
@@ -132,8 +132,8 @@ def get_coin_ids():
         required: false
         default: 10
         minimum: 1
-        maximum: 8000
-        description: Number of coin IDs to return (max 8000)
+        maximum: 100
+        description: Number of coin IDs to return (max 100)
       - name: offset
         in: query
         type: integer
@@ -181,7 +181,7 @@ def get_coin_ids():
     """
     try:
         # Get pagination params
-        limit = min(int(request.args.get('limit', 10)), 8000)  # Cap at 8000
+        limit = min(int(request.args.get('limit', 10)), 100)  # Cap at 100
         offset = int(request.args.get('offset', 0))
         
         logger.info(f"Fetching IDs of top {limit} coins (offset: {offset})")
@@ -305,7 +305,7 @@ def search_coins():
         required: false
         default: 10
         minimum: 1
-        maximum: 8000
+        maximum: 100
         description: Maximum number of results to return
     responses:
       200:
@@ -391,7 +391,7 @@ def search_coins():
                 'message': "Search query 'q' parameter is required"
             }), 400
         
-        limit = min(int(request.args.get('limit', 10)), 8000)
+        limit = min(int(request.args.get('limit', 10)), 100)
         
         logger.info(f"Searching coins with query: {query}")
         results = _coin_service.search_coins(query=query, limit=limit)
