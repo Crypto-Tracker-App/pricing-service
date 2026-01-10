@@ -6,15 +6,11 @@ from app import create_app, db
 @pytest.fixture
 def app():
     """Create and configure a test app."""
-    # Set test environment
-    os.environ['FLASK_ENV'] = 'testing'
-    os.environ['SECRET_KEY'] = 'test-secret-key'
-    os.environ['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
-    
     app = create_app()
     
-    # Override database URI for testing
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
+    # Load testing configuration
+    from app.config import TestingConfig
+    app.config.from_object(TestingConfig)
     
     with app.app_context():
         db.create_all()
