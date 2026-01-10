@@ -4,11 +4,14 @@ from flasgger import Swagger
 
 db = SQLAlchemy()
 
-def create_app():
+def create_app(config_class=None):
     app = Flask(__name__)
     
     # Load config from app.config module
-    app.config.from_object('app.config.Config')
+    if config_class is None:
+        app.config.from_object('app.config.Config')
+    else:
+        app.config.from_object(config_class)
     
     # Initialize SQLAlchemy
     db.init_app(app)
