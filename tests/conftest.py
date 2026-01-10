@@ -6,6 +6,10 @@ from app import create_app, db
 @pytest.fixture
 def app():
     """Create and configure a test app."""
+    # Set test environment
+    os.environ['FLASK_ENV'] = 'testing'
+    os.environ['SECRET_KEY'] = 'test-secret-key'
+    
     app = create_app()
     
     # Load testing configuration
