@@ -271,6 +271,14 @@ def get_coin(coin_id: str):
     """
     try:
         coin_data = _coin_service.get_coin_by_id(coin_id)
+        
+        if coin_data is None:
+            logger.warning(f"Coin not found: {coin_id}")
+            return jsonify({
+                'status': 'error',
+                'message': f'Coin with ID "{coin_id}" not found'
+            }), 404
+        
         return jsonify({
             'status': 'success',
             'data': coin_data
