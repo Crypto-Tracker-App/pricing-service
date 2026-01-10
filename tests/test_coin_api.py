@@ -1,6 +1,7 @@
 """Tests for pricing service API endpoints."""
 import pytest
 from app.models.coinModels import Coin
+from app.models.marketData import MarketData
 from app import db
 
 
@@ -106,6 +107,17 @@ class TestCoinAPI:
         with app.app_context():
             coin = Coin(id='bitcoin', symbol='btc', name='Bitcoin')
             db.session.add(coin)
+            db.session.commit()
+            
+            # Add market data for the coin
+            market_data = MarketData(
+                coin_id='bitcoin',
+                current_price=43250.50,
+                market_cap=847832100000,
+                market_cap_rank=1,
+                total_volume=25678000000
+            )
+            db.session.add(market_data)
             db.session.commit()
         
         response = client.get('/api/coin/bitcoin')
