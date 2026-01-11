@@ -1,297 +1,450 @@
-# CryptoTracker - Pricing Service
+# Crypto Tracker - Pricing Service
 
-A Flask-based microservice for the CryptoTracker application that fetches and manages cryptocurrency pricing data from CoinGecko.
+A microservice for monitoring and retrieving cryptocurrency price data as part of the Azure Crypto Tracker Application. Built with Flask and integrated with CoinGecko API, this service provides real-time cryptocurrency pricing information with support for price alerts and market data analysis.
 
-## Overview
+## Table of Contents
 
-The Pricing Service is responsible for:
-- Fetching current cryptocurrency prices
-- Retrieving cryptocurrency market data
-- Managing coin metadata and information
-- Storing and updating coin data in the database
-- Providing pricing endpoints for other CryptoTracker services
+- [Features](#features)
+- [Prerequisites](#prerequisites)
+- [Installation](#installation)
+- [Configuration](#configuration)
+- [Running Locally](#running-locally)
+- [API Documentation](#api-documentation)
+- [Testing](#testing)
+- [Docker Deployment](#docker-deployment)
+- [CI/CD Deployment](#cicd-deployment)
+- [Project Structure](#project-structure)
+- [Environment Variables](#environment-variables)
 
-## Technology Stack
+## Features
 
-- **Language**: Python 3.14.
-- **Framework**: Flask 3.1
-- **ORM**: Flask-SQLAlchemy 3.1.1
-- **WSGI Server**: Gunicorn 21.2.0
-- **Data Source**: CoinGecko API (via coingecko-sdk 1.12.0)
-- **Database**: PostgreSQL 18
-- **Migrations**: Alembic 1.17.
+- 🪙 Real-time cryptocurrency price tracking
+- 📊 Market data retrieval and analysis
+- 🔔 Price alert triggering system
+- 🔐 JWT authentication
+- 📚 Swagger/OpenAPI documentation
+- 🧪 Comprehensive test coverage
+- ☁️ Azure-native deployment (AKS)
+- 🐳 Docker containerization
 
-## Local Development
-.
-### Installation
+## Prerequisites
+
+- Python 3.12+
+- PostgreSQL 12+
+- Docker (for containerized deployment)
+- kubectl (for Kubernetes deployment)
+- Azure CLI (for Azure deployment)
+- Git
+
+## Installation
+
+### 1. Clone the Repository
 
 ```bash
-# Clone the repository
-git clone https://github.com/Crypto-Tracker-App/pricing-service.git
+git clone <repository-url>
 cd pricing-service
+```
 
-# Create virtual environment
-python -m venv venv
+### 2. Create Virtual Environment
+
+```bash
+python3 -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
+```
 
-# Install dependencies
+### 3. Install Dependencies
+
+```bash
+pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-### Configuration
+### 4. Initialize Database
 
-Create a `.env` file in the project root:
+Create a PostgreSQL database:
+
+```bash
+createdb pricing_db
+```
+
+Run database migrations:
+
+```bash
+alembic upgrade head
+```
+
+## Configuration
+
+### Environment Variables
+
+Create a `.env` file in the project root with the following variables:
 
 ```env
-POSTGRES_USER=dev_user
-POSTGRES_PASSWORD=dev_password
-POSTGRES_DB=dev_db
-DB_PORT=5432
+# Service Configuration
+SERVICE_NAME=pricing-service
+SERVICE_VERSION=1.0.0
+ENVIRONMENT=development
+
+# Security
+SECRET_KEY=your-secret-key-here-change-in-production
+
+# Database Configuration
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=your-db-password
+POSTGRES_DB=pricing_db
 DB_HOST=localhost
+DB_PORT=5432
 
-COINGECKO_API_KEY=your_api_key_here
+# External API Configuration
+COINGECKO_API_KEY=your-coingecko-api-key
+
+# Logging
+EXTERNAL_LOG_LEVEL=WARNING
+LOG_REQUEST_COMPLETION=errors
 ```
 
-### Running with Docker Compose
+### Sensitive Variables for Production
+
+For production deployments, use Azure Key Vault or environment-specific secrets:
 
 ```bash
-# Start PostgreSQL and the application
-docker-compose up
-
-# The application will be available at http://localhost:12000
+export SECRET_KEY=<production-secret-key>
+export POSTGRES_PASSWORD=<secure-password>
+export COINGECKO_API_KEY=<api-key>
 ```
 
-### Running Locally
+## Running Locally
+
+### Start the Application
 
 ```bash
-# Run database migrations
-alembic upgrade head
+# Using Flask development server
+python -m flask run --host 0.0.0.0 --port 5000
 
-# Seed the database with initial coin data
-flask seed
-
-# Start the Flask development server
-python wsgi.py
+# Or using gunicorn (production-like)
+gunicorn --bind 0.0.0.0:5000 wsgi:app
 ```
 
-### CLI Commands
+The application will be available at `http://localhost:5000`
 
-```bash
-# Seed database with coin data
-flask seed
+### Access Swagger Documentation
 
-# Update market data for all coins
-flask update-market-data
-```
-
-## API Endpoints
+Navigate to `http://localhost:5000/apidocs/` to access the interactive Swagger UI with all available endpoints.
 
 ### Health Check
-```
-GET /health
-```
-Returns health status and database connectivity check.
 
-**Response:**
-```json
-{
-  "status": "ok",
-  "detail": "database connection ok"
-}
-```
-
-### Get Top Coins
-```
-GET /api/top-coins?limit={limit}&offset={offset}
-```
-Retrieves top coins by market cap rank with pagination.
-
-**Query Parameters:**
-- `limit` (optional): Number of coins to return (default: 10, max: 100)
-- `offset` (optional): Number of coins to skip (default: 0)
-
-**Example:** `GET /api/top-coins?limit=20&offset=0`
-
-**Response:**
-```json
-{
-  "status": "success",
-  "data": [...],
-  "pagination": {
-    "limit": 20,
-    "offset": 0,
-    "returned": 20
-  }
-}
-```
-
-### Get Coin by ID
-```
-GET /api/coin/{coin_id}
-```
-Retrieves a single coin's metadata and market data by CoinGecko ID.
-
-**Path Parameters:**
-- `coin_id`: CoinGecko coin identifier (e.g., "bitcoin", "ethereum")
-
-**Example:** `GET /api/coin/bitcoin`
-
-**Response:**
-```json
-{
-  "status": "success",
-  "data": {
-    "id": "bitcoin",
-    "name": "Bitcoin",
-    "symbol": "BTC",
-    ...
-  }
-}
-```
-
-## Deployment
-
-### Azure Cloud Architecture
-
-The Pricing Service is designed to run on Azure using the following services:
-
-- **Azure Kubernetes Service (AKS)** - Container orchestration
-- **Azure Container Registry (ACR)** - Private container image registry
-- **Azure Monitor** - Application insights and logging
-
-### Docker
-
-The application is containerized using Docker with Python 3.14 Alpine base image.
+Test the service health:
 
 ```bash
-# Build Docker image
-docker build -t pricing-service:latest .
+curl http://localhost:5000/health
+```
 
-# Run container locally
-docker run -p 12000:12000 \
-  -e POSTGRES_USER=dev_user \
-  -e POSTGRES_PASSWORD=dev_password \
-  -e POSTGRES_DB=dev_db \
-  -e DB_HOST=postgres \
-  -e DB_PORT=5432 \
-  -e COINGECKO_API_KEY=your_api_key \
+## API Documentation
+
+The API is documented using Swagger/OpenAPI 2.0 and is automatically generated from the code.
+
+### Available Endpoints
+
+#### Health Check
+- `GET /health` - Service health status and version information
+
+#### Coin Endpoints
+- `GET /coins` - Retrieve list of tracked coins
+- `GET /coins/<coin_id>` - Get specific coin details
+- `POST /coins` - Add a new coin (requires authentication)
+
+#### Price Data
+- `GET /prices/<coin_id>` - Get current price data
+- `GET /market-data/<coin_id>` - Get market data for a coin
+
+#### Alerts
+- `POST /alerts` - Create a price alert (requires authentication)
+- `GET /alerts` - List user's alerts (requires authentication)
+
+Full API documentation is available at the `/apidocs/` endpoint when running the application.
+
+## Testing
+
+### Run All Tests
+
+```bash
+pytest
+```
+
+### Run Tests with Coverage
+
+```bash
+pytest --cov=app --cov-report=term-missing
+```
+
+### Test Files
+
+- `tests/test_coin_api.py` - API endpoint tests
+- `tests/test_coin_service.py` - Business logic tests
+- `tests/test_health.py` - Health check tests
+- `tests/test_models.py` - Database model tests
+
+## Docker Deployment
+
+### Build Docker Image
+
+```bash
+docker build -t pricing-service:latest .
+```
+
+### Run Docker Container Locally
+
+```bash
+docker run -p 5000:5000 \
+  -e POSTGRES_HOST=host.docker.internal \
+  -e POSTGRES_USER=postgres \
+  -e POSTGRES_PASSWORD=your-password \
+  -e SECRET_KEY=your-secret \
+  -e COINGECKO_API_KEY=your-api-key \
   pricing-service:latest
 ```
 
-The application runs on port **12000** using Gunicorn.
-
-### Azure Container Registry
+### Push to Azure Container Registry
 
 ```bash
-# Login to Azure
-az login
-
-# Login to Azure Container Registry
-az acr login --name <your-acr-name>
-
-# Tag image for ACR
-docker tag pricing-service:latest cryptotracker.azurecr.io/pricing-service:latest
-
-# Push image to ACR
-docker push cryptotracker.azurecr.io/pricing-service:latest
+az acr build --registry cryptotracker --image pricing-service:latest .
 ```
 
-### Azure Kubernetes Service Deployment
+## CI/CD Deployment
+
+The project uses GitHub Actions for automated testing, building, and deployment to Azure Kubernetes Service (AKS).
+
+### CI/CD Pipeline Overview
+
+The pipeline (`.github/workflows/ci-cd.yml`) consists of three main jobs:
+
+#### 1. **Test Job** (`test`)
+- Runs on Ubuntu latest
+- Sets up Python 3.12
+- Installs dependencies
+- Runs pytest with coverage reporting
+- Ensures all tests pass before proceeding
+
+**Trigger**: Automatically runs on every push to `main` branch
+
+```yaml
+- name: Run tests
+  run: PYTHONPATH="${PYTHONPATH}:$(pwd)" pytest --cov=app --cov-report=term-missing
+```
+
+#### 2. **Build and Push Job** (`build-and-push`)
+- **Depends on**: `test` job (runs only if tests pass)
+- Sets up Docker Buildx for multi-platform builds
+- Authenticates with Azure Container Registry (ACR)
+- Builds Docker image for `linux/amd64` platform
+- Pushes image to ACR with two tags:
+  - `<SHA>` - Short commit SHA for traceability
+  - `latest` - For easy reference to the most recent build
+
+**Docker Image Naming Convention**:
+```
+cryptotracker.azurecr.io/pricing-service:<commit-sha>
+cryptotracker.azurecr.io/pricing-service:latest
+```
+
+**Caching**: Uses GitHub Actions cache to speed up builds
+
+#### 3. **Deploy to AKS Job** (`deploy-to-aks`)
+- **Depends on**: `build-and-push` job (runs only after successful image push)
+- Authenticates to Azure using OIDC (workload identity federation)
+- Sets AKS cluster context
+- Creates Docker registry secret for image pulling
+- Updates the `pricing-service` deployment with new image
+- Verifies rollout status and pod health
+
+**Deployment Steps**:
 
 ```bash
-# Connect to AKS cluster
-az aks get-credentials --resource-group <resource-group> --name <aks-cluster-name>
+# 1. Login to Azure using OIDC credentials
+az login --service-principal -u $AZURE_CLIENT_ID -p $AZURE_CLIENT_SECRET -t $AZURE_TENANT_ID
 
-# Create Kubernetes namespace (optional)
-kubectl create namespace crypto-tracker
+# 2. Set AKS context
+az aks get-credentials --name crypto-tracker --resource-group crypto-tracker
 
-# Deploy to AKS
-kubectl apply -f k8s/ -n crypto-tracker
+# 3. Create/update image pull secret
+kubectl create secret docker-registry acr-creds --docker-server=cryptotracker.azurecr.io ...
 
-# Verify deployment
-kubectl get pods -n crypto-tracker
-kubectl get services -n crypto-tracker
+# 4. Update deployment with new image
+kubectl set image deployment/pricing-service pricing-service=cryptotracker.azurecr.io/pricing-service:<SHA>
 
-# Check logs
-kubectl logs -f deployment/pricing-service -n crypto-tracker
+# 5. Monitor rollout
+kubectl rollout status deployment/pricing-service --timeout=180s
 ```
 
-### CI/CD with GitHub Actions
+### Required GitHub Secrets
 
-Automated deployment pipeline:
-1. **Build** - Build Docker image on push to main branch
-2. **Push** - Push image to Azure Container Registry
-3. **Deploy** - Update AKS deployment with new image
-4. **Verify** - Run health checks
+Configure these secrets in your repository settings (`Settings > Secrets and variables > Actions`):
 
-*Note: GitHub Actions workflow configuration coming soon.*
+| Secret | Description | Example |
+|--------|-------------|---------|
+| `ACR_USERNAME` | Azure Container Registry username | `<ACR-name>` |
+| `ACR_PASSWORD` | Azure Container Registry password | `<ACR-password>` |
+| `AZURE_CLIENT_ID` | Azure Service Principal client ID | `00000000-0000-0000-0000-000000000000` |
+| `AZURE_TENANT_ID` | Azure tenant ID | `00000000-0000-0000-0000-000000000000` |
+| `AZURE_SUBSCRIPTION_ID` | Azure subscription ID | `00000000-0000-0000-0000-000000000000` |
+
+### Required GitHub Variables
+
+Configure these variables in your repository settings (`Settings > Secrets and variables > Actions`):
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `AKS_NAME` | AKS cluster name | `crypto-tracker` |
+| `AKS_RG` | AKS resource group name | `crypto-tracker` |
+
+### Deployment Flow
+
+```
+Push to main branch
+    ↓
+Run Tests (pytest)
+    ↓
+Tests Pass?
+    ├─ No → Fail pipeline, notify
+    └─ Yes ↓
+      Build Docker Image
+          ↓
+      Push to ACR
+          ↓
+      Update AKS Deployment
+          ↓
+      Verify Rollout
+          ↓
+      Deployment Complete ✓
+```
+
+### Manual Deployment (if needed)
+
+If you need to deploy manually without pushing code:
+
+```bash
+# 1. Build image locally
+docker build -t cryptotracker.azurecr.io/pricing-service:custom-tag .
+
+# 2. Push to ACR
+az acr build --registry cryptotracker --image pricing-service:custom-tag .
+
+# 3. Update deployment
+kubectl set image deployment/pricing-service pricing-service=cryptotracker.azurecr.io/pricing-service:custom-tag
+
+# 4. Monitor
+kubectl rollout status deployment/pricing-service
+```
+
+### Troubleshooting Deployments
+
+**Check deployment status**:
+```bash
+kubectl describe deployment pricing-service
+kubectl get pods -l app=pricing-service
+kubectl logs -l app=pricing-service
+```
+
+**View recent image**:
+```bash
+az acr repository show-tags --name cryptotracker --repository pricing-service
+```
+
+**Rollback to previous version**:
+```bash
+kubectl rollout undo deployment/pricing-service
+```
 
 ## Project Structure
 
 ```
 pricing-service/
-├── wsgi.py                     # Flask application entry point
-├── requirements.txt            # Python dependencies
-├── Dockerfile                  # Container image definition
-├── docker-compose.yml          # Docker Compose configuration
-├── alembic.ini                 # Alembic migration configuration
 ├── app/
-│   ├── __init__.py             # Flask app factory and CLI commands
-│   ├── config.py               # Application configuration
-│   ├── api/                    # API endpoints
-│   │   ├── health.py           # Health check endpoint
-│   │   └── coin.py             # Coin-related endpoints
-│   ├── models/                 # Database models
-│   │   ├── coinModels.py       # Coin entity model
-│   │   └── marketData.py       # Market data model
-│   ├── repositories/           # Data access layer
-│   │   └── coin_repository.py  # Coin repository
-│   ├── services/               # Business logic
-│   │   ├── coin_service.py     # Coin service
-│   │   └── price_service.py    # Price service
-│   └── utils/                  # Utilities and helpers
-│       ├── coingecko.py        # CoinGecko API client
-│       ├── json.py             # JSON serialization utilities
-│       └── logger.py           # Logging utilities
-├── migrations/                 # Alembic database migrations
-│   ├── env.py
-│   ├── script.py.mako
-│   └── versions/
-│       └── 238525e66797_initialization_added_coin_and_.py
-└── k8s/                        # Kubernetes manifests (currently empty)
+│   ├── __init__.py           # Application factory
+│   ├── config.py             # Configuration management
+│   ├── api/                  # API endpoints
+│   │   ├── coin.py           # Coin endpoints
+│   │   └── health.py         # Health check endpoint
+│   ├── middleware/           # Custom middleware
+│   │   └── auth_middleware.py # JWT authentication
+│   ├── models/               # Database models
+│   │   ├── coinModels.py
+│   │   └── marketData.py
+│   ├── repositories/         # Data access layer
+│   │   └── coin_repository.py
+│   ├── services/             # Business logic
+│   │   ├── alert_trigger_service.py
+│   │   ├── coin_service.py
+│   │   └── price_service.py
+│   └── utils/                # Utility functions
+│       ├── coingecko.py      # CoinGecko API client
+│       ├── json.py           # JSON utilities
+│       ├── jwt_service.py    # JWT handling
+│       ├── logger.py         # Logging configuration
+│       └── resilience.py     # Retry/resilience logic
+├── migrations/               # Alembic database migrations
+├── tests/                    # Test suite
+├── Dockerfile                # Docker configuration
+├── requirements.txt          # Python dependencies
+├── pytest.ini               # pytest configuration
+├── wsgi.py                  # WSGI entry point
+└── alembic.ini              # Alembic configuration
 ```
 
 ## Environment Variables
 
-| Variable | Description | Required | Default |
-|----------|-------------|----------|---------|
-| `POSTGRES_USER` | PostgreSQL username | Yes | postgres |
-| `POSTGRES_PASSWORD` | PostgreSQL password | Yes | postgres |
-| `POSTGRES_DB` | PostgreSQL database name | Yes | pricing_db |
-| `DB_PORT` | PostgreSQL port | No | 5432 |
-| `DB_HOST` | PostgreSQL host | No | localhost |
-| `COINGECKO_API_KEY` | CoinGecko API key | Yes | - |
-| `SERVICE_NAME` | Service identifier for logging | No | pricing-service |
-| `SERVICE_VERSION` | Service version for logging | No | 1.0.0 |
-| `ENVIRONMENT` | Deployment environment | No | development |
-| `EXTERNAL_LOG_LEVEL` | Log level for external libraries | No | WARNING |
-| `LOG_REQUEST_COMPLETION` | Request logging mode (errors\|all\|off) | No | errors |
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `SERVICE_NAME` | `pricing-service` | Service identifier |
+| `SERVICE_VERSION` | `1.0.0` | API version |
+| `ENVIRONMENT` | `development` | Environment (development/staging/production) |
+| `SECRET_KEY` | `dev-secret-key-...` | JWT signing key (change in production!) |
+| `POSTGRES_USER` | `postgres` | Database user |
+| `POSTGRES_PASSWORD` | `postgres` | Database password |
+| `POSTGRES_DB` | `pricing_db` | Database name |
+| `DB_HOST` | `localhost` | Database hostname |
+| `DB_PORT` | `5432` | Database port |
+| `COINGECKO_API_KEY` | - | CoinGecko API key (optional, for higher limits) |
+| `EXTERNAL_LOG_LEVEL` | `WARNING` | Logging level for external libraries |
+| `LOG_REQUEST_COMPLETION` | `errors` | Request logging level |
 
-### Azure-Specific Configuration
+## Contributing
 
-When deploying to Azure, these variables are typically managed through:
-- **Azure Key Vault** - For sensitive data (passwords, API keys)
-- **Kubernetes ConfigMaps** - For non-sensitive configuration
-- **Kubernetes Secrets** - For sensitive configuration in-cluster
+1. Create a feature branch: `git checkout -b feature/your-feature`
+2. Make changes and ensure tests pass: `pytest`
+3. Commit with clear messages: `git commit -am 'Add feature'`
+4. Push to branch: `git push origin feature/your-feature`
+5. Create Pull Request
 
-Example Kubernetes Secret:
-```yaml
-apiVersion: v1
-kind: Secret
-metadata:
-  name: pricing-service-secrets
-type: Opaque
-stringData:
-  POSTGRES_PASSWORD: <your-db-password>
-  COINGECKO_API_KEY: <your-api-key>
-```
+All tests must pass and coverage should be maintained above 80%.
+
+## Support & Troubleshooting
+
+### Common Issues
+
+**Database connection errors**:
+- Ensure PostgreSQL is running
+- Check `DB_HOST`, `DB_USER`, `DB_PASSWORD`, `DB_NAME` in `.env`
+
+**CoinGecko API errors**:
+- Verify internet connectivity
+- Check `COINGECKO_API_KEY` if using authenticated requests
+- Monitor rate limits (free tier: 10-50 calls/minute)
+
+**Import errors**:
+- Ensure virtual environment is activated
+- Run `pip install -r requirements.txt` again
+- Clear Python cache: `find . -type d -name __pycache__ -exec rm -r {} +`
+
+## License
+
+[Add license information here]
+
+## Changelog
+
+### Version 1.0.0
+- Initial release
+- Core pricing service functionality
+- JWT authentication
+- Swagger/OpenAPI documentation
+- CI/CD pipeline with AKS deployment
