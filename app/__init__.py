@@ -103,9 +103,8 @@ def register_cli_commands(app):
         """Update the market data for all coins."""
         from app.services.coin_service import CoinService
         from app.repositories.coin_repository import CoinRepository
+        from app.services.alert_trigger_service import trigger_alert_check
         from app.utils.logger import get_logger
-        import requests
-        import os
         
         logger = get_logger(__name__)
         
@@ -114,13 +113,9 @@ def register_cli_commands(app):
             service.updateCoinMarketData()
             logger.info("Market data updated successfully!")
             
-            # Trigger alert checking in alert-service
-            alert_service_url = os.getenv('ALERT_SERVICE_URL', 'http://20.251.246.218/alert-service')
-            check_alerts_url = f"{alert_service_url}/api/check-alerts"
+            # Trigger alert checking in alert-service with resilience
             try:
-                response = requests.post(check_alerts_url, timeout=5)
-                response.raise_for_status()
-                logger.info("Alert check triggered successfully!", extra={"url": check_alerts_url})
-            except requests.exceptions.RequestException as e:
-                logger.warning(f"Failed to trigger alert check: {e}", extra={"url": check_alerts_url})
+                trigger_alert_check()
+            except Exception as e:
+                logger.warning(f"Failed to trigger alert check (will retry): {e}")
 
